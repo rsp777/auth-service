@@ -1,6 +1,6 @@
 name: Build and Deploy Artifact to Maven Registry
 on:
-  merge_group:
+  push:
     branches: master
 jobs:
   build:
