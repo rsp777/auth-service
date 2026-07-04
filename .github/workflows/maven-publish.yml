@@ -114,7 +114,7 @@ jobs:
           else
             # Trim whitespace
             VERSION=$(echo "$VERSION" | tr -d '\r' | tr -d '\n')
-            TAG="v${VERSION}"
+            TAG="${VERSION}"
           fi
 
           echo "Creating tag $TAG for SHA $GITHUB_SHA"
