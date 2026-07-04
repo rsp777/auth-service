@@ -13,7 +13,6 @@ jobs:
     with:
       USERNAME: ${{ github.actor }}
       
-      
     # 2. 'secrets' is used ONLY for secure tokens
     secrets:
       PASSWORD: ${{ secrets.GITHUB_TOKEN }}
