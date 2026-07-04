@@ -1,7 +1,7 @@
 name: Build and Deploy Artifact to Maven Registry
 on:
   push:
-    branches: master
+    branches: null
 jobs:
   build:
     runs-on: ubuntu-latest
