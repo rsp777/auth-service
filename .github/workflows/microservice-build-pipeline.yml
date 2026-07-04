@@ -1,0 +1,20 @@
+name: Microservice Build Pipeline
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build-and-deploy:
+    # Point this to your central hub repository
+    uses: rsp777/deployment-workflows/.github/workflows/maven-build.yml@main
+    secrets:
+      # Standard GitHub Actions variables for authentication
+      MAVEN_USERNAME: ${{ github.actor }}
+      MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      
+      # The descriptive label for Maven (can be anything)
+      REPO_NAME: "GitHub Packages"
+      
+      # The actual destination where the JAR will be published
+      REPO_URL: "${{ secrets.REPO_URL }}"
