@@ -67,7 +67,7 @@ jobs:
         with:
           java-version: "17"
           distribution: "temurin"
-
+          
       - name: Run tests
         run: mvn test
 
