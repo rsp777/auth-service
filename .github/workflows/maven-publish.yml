@@ -96,7 +96,38 @@ jobs:
         with:
           java-version: "17"
           distribution: "temurin"
+          
+      - name: Create and push tag (use pom version if available)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_AUTHOR_NAME: ${{ github.actor }}
+          GIT_AUTHOR_EMAIL: ${{ github.actor }}@users.noreply.github.com
+        run: |
+          set -e
+          git config user.email "$GIT_AUTHOR_EMAIL"
+          git config user.name "$GIT_AUTHOR_NAME"
 
+          # Try to read the version from the Maven project. If that fails, fall back to the run number.
+          VERSION=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version 2>/dev/null || true)
+          if [ -z "$VERSION" ]; then
+            TAG="v${{ github.run_number }}"
+          else
+            # Trim whitespace
+            VERSION=$(echo "$VERSION" | tr -d '\r' | tr -d '\n')
+            TAG="v${VERSION}"
+          fi
+
+          echo "Creating tag $TAG for SHA $GITHUB_SHA"
+
+          # Create annotated tag if it doesn't already exist
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists locally; skipping creation."
+          else
+            git tag -a "$TAG" -m "Release $TAG ($GITHUB_SHA)"
+          fi
+
+          # Push the tag (GITHUB_TOKEN provided via persist-credentials)
+          git push origin "$TAG
       - name: Download a Build Artifact
         uses: actions/download-artifact@v8.0.1
         with:
