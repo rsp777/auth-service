@@ -3,7 +3,7 @@ name: Microservice Build Pipeline
 on:
   push:
     branches: [ "master" ]
-
+    
 jobs:
   build-and-deploy:
     # Point this to your central hub repository
