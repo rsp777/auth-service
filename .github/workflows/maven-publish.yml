@@ -1,7 +1,6 @@
 name: Build and Deploy Artifact to Maven Registry
 on:
-  push:
-    branches: null
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
