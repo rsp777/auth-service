@@ -78,8 +78,9 @@ public class LoginAuthController {
 	            logger.info("token : {}",token);
 	        }
 	        DecodedJWT decodedJWT =  JWT.decode(token);
-	        UserDto dto = userService.getUserByuserName(decodedJWT.getSubject());
-	        logger.info("UserDto : {}",dto.toString());
+			String[] decodedString = decodedJWT.getSubject().split("\\|");
+			UserDto dto = userService.getUserByuserName(decodedString[decodedString.length - 1]);
+	        logger.info("username : {}",dto.getUsername());
 	        
 	        if (dto.getLoggedIn().equals(true)) {
 	        	logger.info("Is Logged in : {}",dto.getLoggedIn());

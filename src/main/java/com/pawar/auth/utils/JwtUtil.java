@@ -1,6 +1,5 @@
 package com.pawar.auth.utils;
 
-
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
@@ -48,10 +47,10 @@ public class JwtUtil {
 
 	@Autowired
 	private UserRepository userRepository;
-	
+
 	@Autowired
 	private UserService userService;
-	
+
 	@Autowired
 	private EntityManagerFactory entityManagerFactory;
 	private String secretKey = "secretKey";
@@ -68,7 +67,7 @@ public class JwtUtil {
 	public String generateToken(UserDto userDto) throws ClientProtocolException, IOException, TokenNotFoundException {
 
 		Map<String, Object> claims = new HashMap<>();
-		Boolean revoked = false;
+		// Boolean revoked = false;
 		logger.info("userDto name {} ", userDto.getUsername());
 		RefreshTokens refreshTokens = new RefreshTokens();
 		String token = "";
@@ -78,19 +77,23 @@ public class JwtUtil {
 		logger.info("isTokenAlreadyAvailable : {}", isTokenAlreadyAvailable);
 
 		if (!isTokenAlreadyAvailable) {
-			token = createToken(claims, userDto.getUsername());
-
+			// User user = new User(userDto);
+			String name = loggerInUser.getFirstName() + " " + loggerInUser.getMiddleName() + " "
+					+ loggerInUser.getLastName();
+			String data = name + "|" + loggerInUser.getRoles() + "|" + loggerInUser.getUsername();
+			// logger.info("User data for jwt token : {}", data);
+			token = createToken(claims, data);
 			Date dateOfExpiration = extractClaim(token, claimss -> claimss.getExpiration());
 			Date dateofIssue = extractClaim(token, claimss -> claimss.getIssuedAt());
-			String username = extractClaim(token, claimss -> claimss.getSubject());
+			// String username = extractClaim(token, claimss -> claimss.getSubject());
 			refreshTokens.setToken(token);
 			refreshTokens.setCreatedAt(dateofIssue);
 			refreshTokens.setExpires(dateOfExpiration);
 			refreshTokens.setUser(loggerInUser);
 			refreshTokens.setRevoked(false);
-			logger.info("Refresh Token : {}", refreshTokens);
+			logger.debug("Refresh Token : {}", refreshTokens);
 
-			logger.info("dateOfExpiration: {}", dateOfExpiration);
+			logger.debug("dateOfExpiration: {}", dateOfExpiration);
 			refreshTokensRepository.save(refreshTokens);
 			loggerInUser.setLoggedIn(true);
 			userRepository.save(loggerInUser);
@@ -104,23 +107,27 @@ public class JwtUtil {
 			if (isTokenExpired) {
 				int count = handleTokenExpiration(refreshTokens);
 				if (count > 0) {
-					token = createToken(claims, userDto.getUsername());
+					User user = new User(userDto);
+					String name = user.getFirstName() + " " + user.getMiddleName() + " "
+							+ user.getLastName();
+					String data = name + "|" + user.getRoles() + "|" + user.getUsername();
+					token = createToken(claims, data);
 					Date dateOfExpiration = extractClaim(token, claimss -> claimss.getExpiration());
 					Date dateofIssue = extractClaim(token, claimss -> claimss.getIssuedAt());
-					String username = extractClaim(token, claimss -> claimss.getSubject());
+					// String username = extractClaim(token, claimss -> claimss.getSubject());
 					refreshTokens.setToken(token);
 					refreshTokens.setCreatedAt(dateofIssue);
 					refreshTokens.setExpires(dateOfExpiration);
 					refreshTokens.setUser(loggerInUser);
 					refreshTokens.setRevoked(false);
-					logger.info("Refresh Token : {}", refreshTokens);
+					logger.debug("Refresh Token : {}", refreshTokens);
 
-					logger.info("dateOfExpiration: {}", dateOfExpiration);
+					logger.debug("dateOfExpiration: {}", dateOfExpiration);
 					refreshTokensRepository.save(refreshTokens);
 					loggerInUser.setLoggedIn(true);
 					userRepository.save(loggerInUser);
 					token = refreshTokens.getToken();
-					logger.info("Token : {}",token);
+					logger.info("Token : {}", token);
 					return token;
 				}
 			}
@@ -128,7 +135,8 @@ public class JwtUtil {
 			return token;
 		}
 
-		logger.info("User is logged in : {}", loggerInUser);
+		logger.info("User is logged in : {}", loggerInUser.getUsername());
+		logger.debug("User is logged in : {}", loggerInUser);
 		logger.info("logged in user : {}", loggerInUser.getLoggedIn());
 		return token;
 	}
@@ -157,7 +165,7 @@ public class JwtUtil {
 		entityManager.getTransaction().commit();
 		entityManager.close();
 		return updatedCount;
-//		}
+		// }
 	}
 
 	public Boolean isTokenAlreadyAvailable(User user) throws TokenNotFoundException {
@@ -188,7 +196,14 @@ public class JwtUtil {
 	}
 
 	public String extractUsername(String token) {
-		return extractClaim(token, Claims::getSubject);
+		String[] decodedString = extractClaim(token, Claims::getSubject).split("\\|");
+		String user_name = "";
+		user_name = decodedString[decodedString.length - 1];
+		for (String str : decodedString) {
+			logger.info("Decoded String : {}", str);
+		}
+		logger.info("Username extracted from token : {}", user_name);
+		return user_name;
 	}
 
 	public Date extractExpiration(String token) {
@@ -210,34 +225,35 @@ public class JwtUtil {
 	}
 
 	public void invalidateToken(String token) throws UserNotFoundException {
-		
-		logger.info("token : {}",token);
+
+		logger.info("token : {}", token);
 		Optional<RefreshTokens> refreshTokens = refreshTokensRepository.findBytoken(token);
 		logger.info(refreshTokens.toString());
 		refreshTokensRepository.delete(refreshTokens.get());
 		logger.info("Token is deleted");
-		
+
 	}
 
 	public void signOut(String token) throws UserNotFoundException {
 		String username = extractUsername(token);
+		logger.info("Username extracted from token : {}", username);
 		UserDto userDto = userService.getUserByuserName(username);
 		User user = userService.convertDtoToEntity(userDto);
 		user.setLoggedIn(false);
-		logger.info(user.toString());
-		loggedOut(user);		
+		logger.info("User logged out : {}", user);
+		loggedOut(user);
 	}
-	
+
 	public int loggedOut(User user) {
-		logger.info("Logged Out User : {}",user);
+		logger.info("Logged Out User : {}", user);
 
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
 		entityManager.getTransaction().begin();
 
 		Boolean newLoggedIn = user.getLoggedIn();
-		logger.info("newLoggedIn : {}",newLoggedIn );
+		logger.info("newLoggedIn : {}", newLoggedIn);
 		Long userId = user.getUser_id();
-		logger.info("userId : {}",userId );
+		logger.info("userId : {}", userId);
 
 		Query updateQuery = entityManager.createNamedQuery("updateLoggedIn")
 				.setParameter("logged_in", newLoggedIn).setParameter("user_id", userId);
@@ -247,6 +263,6 @@ public class JwtUtil {
 		entityManager.getTransaction().commit();
 		entityManager.close();
 		return updatedCount;
-		
+
 	}
 }
