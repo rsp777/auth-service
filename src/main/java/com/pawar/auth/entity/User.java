@@ -6,12 +6,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.annotations.DynamicUpdate;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.pawar.auth.dto.RoleDto;
 import com.pawar.auth.dto.UserDto;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.ColumnResult;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -20,37 +23,39 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.NamedNativeQueries;
+import jakarta.persistence.NamedNativeQuery;
+import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "users")
+@DynamicUpdate
+@SqlResultSetMapping(name = "updateResultt", columns = { @ColumnResult(name = "count") })
+@NamedNativeQueries({
+		@NamedNativeQuery(name = "updateLoggedIn", query = "UPDATE users SET logged_in = :logged_in WHERE user_id = :user_id", resultSetMapping = "updateResultt")
+})
 public class User {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "user_id")
 	private Long userId;
 
-	@JsonInclude(value = Include.CUSTOM)
 	@Column(unique = true, nullable = true)
 	private String username;
 
-	@JsonInclude(value = Include.CUSTOM)
 	@Column(unique = true, nullable = true)
 	private String email;
 
-	@JsonInclude(value = Include.CUSTOM)
 	@Column(name = "password_hash", nullable = true)
 	private String passwordHash;
 
-	@JsonInclude(value = Include.CUSTOM)
 	@Column(name = "first_name")
 	private String firstName;
 
-	@JsonInclude(value = Include.CUSTOM)
 	@Column(name = "middle_name")
 	private String middleName;
 
-	@JsonInclude(value = Include.CUSTOM)
 	@Column(name = "last_name")
 	private String lastName;
 
